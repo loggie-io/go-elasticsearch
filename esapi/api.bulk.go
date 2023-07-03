@@ -49,6 +49,7 @@ type Bulk func(body io.Reader, o ...func(*BulkRequest)) (*Response, error)
 type BulkRequest struct {
 	Index        string
 	DocumentType string
+	Parameters   map[string]string
 
 	Body io.Reader
 
@@ -77,7 +78,7 @@ func (r BulkRequest) Do(ctx context.Context, transport Transport) (*Response, er
 	var (
 		method string
 		path   strings.Builder
-		params map[string]string
+		params = r.Parameters
 	)
 
 	method = "POST"
@@ -94,7 +95,9 @@ func (r BulkRequest) Do(ctx context.Context, transport Transport) (*Response, er
 	path.WriteString("/")
 	path.WriteString("_bulk")
 
-	params = make(map[string]string)
+	if r.Parameters == nil {
+		params = make(map[string]string)
+	}
 
 	if r.Pipeline != "" {
 		params["pipeline"] = r.Pipeline
@@ -217,6 +220,13 @@ func (f Bulk) WithIndex(v string) func(*BulkRequest) {
 func (f Bulk) WithDocumentType(v string) func(*BulkRequest) {
 	return func(r *BulkRequest) {
 		r.DocumentType = v
+	}
+}
+
+// WithParameters - optional query parameters to be sent with the request.
+func (f Bulk) WithParameters(v map[string]string) func(*BulkRequest) {
+	return func(r *BulkRequest) {
+		r.Parameters = v
 	}
 }
 
